@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ user.username }}</title>
+        {% load static %}
+
+       <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+  <script>
+    function change_item(web) {
+        if ($('#btn--'+web).attr('date_del') != "None"){
+          try{
+              var a = $('#btn--'+web).attr('date_del');
+              a = a.split(" ");
+              a[1] = a[1].substring(0, a.length - 1);
+              var year = a[2];
+              var day = a[1];
+              var month = a[0];
+              month =  "JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(month) / 3 + 1 ;
+              if (month<=9)
+                  {
+                      month = "0"+month;
+                  }
+              if (day<=9)
+                  {
+                      day = "0"+day;
+                  }
+              del_date = year+"-"+month+"-"+day;
+            }catch{
+              del_date = $('#btn--'+web).attr('date_del');
+            }
+        }
+            $('#finished').css('visibility', 'hidden')
+            $('#modal').css('visibility', 'visible');
+            $('#title').text(`Upravit ${web}`);
+            $('#web').val($('#btn--'+web).attr('domain'));
+            $('#username').val($('#btn--'+web).attr('user'));
+            $('#password').val($('#btn--'+web).attr('password'));
+            $('#del_date').val(del_date);
+            $('#id').val($('#btn--'+web).attr('item_id'));
+            $('#idname').val($('#btn--'+web).attr('domain'));
+            $("#change_data").modal();
+    }
+    function save() {
+        var i = $('#idname').val();
+        var web = $('#idname').val();
+         $.ajax({
+             type:'POST',
+             url:'{% url 'change' %}',
+             data:{
+                 'web':$("#web").val(),
+                 'username': $('#username').val(),
+                 'password': $('#password').val(),
+                 'del_date': $('#del_date').val(),
+                 'id': $('#id').val(),
+                 'csrfmiddlewaretoken':'{{ csrf_token }}'
+             },
+             success: function (data) {
+                 if (data.status == "ok")
+                 {
+                     $('#v-pills-'+i+'--tab').text($("#web").val());
+                     $('#'+i+'-u').text($('#username').val());
+                     $('#'+i+'-p').text($('#password').val());
+                     $('#modal').css('visibility', 'hidden')
+                     $('#finished').css('visibility', 'visible');
+
+                     document.querySelector('#btn--'+web).setAttribute('user', $('#username').val());
+                     document.querySelector('#btn--'+web).setAttribute('password',$('#password').val());
+                     document.querySelector('#btn--'+web).setAttribute('domain', $("#web").val());
+                     document.querySelector('#btn--'+web).setAttribute('date_del', $('#del_date').val());
+
+                    $('#del_date_div--'+web).html("");
+                     $('#del_date_div--'+web).append('<p>Vymazat dne: <span id="del_date--'+web+'">'+$('#del_date').val()+'</span></p>');
+
+                     $("#web").val("");
+                     $('#username').val("");
+                     $('#password').val("");
+                     $('#del_date').val("");
+
+
+                 }
+                 else if (data.status == "web")
+                 {
+                     document.getElementById('forweb').innerText = "Název je již použit"
+                     $('#web').css("background", "red");
+                 }
+                 else {
+                     $('#status').text("Chyba");
+                 }
+             },
+             error: function (edata) {
+                 $('#status').text("Chyba");
+             }
+         })
+    }
+    function delte(domain){
+      $.ajax({
+             type:'POST',
+             url:'{% url 'delete_item' %}',
+             data:{
+                 'domain':domain,
+                 'csrfmiddlewaretoken':'{{ csrf_token }}'
+             },
+             success: function (data) {
+                 if (data.status == "ok")
+                 {
+                    $('#v-pills-'+domain+'--tab').remove();
+                    $('#v-pills-'+domain).remove();
+                 }
+                 else {
+                     alert('Chyba');
+                 }
+             },
+             error: function (edata) {
+              alert('Chyba');
+             }
+         })
+    }
+    function save_user()
+    {
+      if($('#new_user_name').val() == "")
+      {
+        $('#new_user_name').css('background', "red");
+        return 0;
+      }
+      if($('#new_user_email').val() == "")
+      {
+        $('#new_user_email').css('background', "red");
+        return 0;
+      }
+      if($('#new_user_password').val() == "")
+      {
+        $('#new_user_password').css('background', "red");
+        return 0;
+      }
+
+      $.ajax({
+             type:'POST',
+             url:'{% url 'change_user' %}',
+             data:{
+                 'name':$('#new_user_name').val(),
+                 'email':$('#new_user_email').val(), 
+                 'password':$('#new_user_password').val(),
+                 'csrfmiddlewaretoken':'{{ csrf_token }}'
+             },
+             success: function (data) {
+                 if (data.status == "ok")
+                 {
+                   $('#user_modal').css('visibility', 'hidden');
+                   $('#user_finished').css('visibility', 'visible');
+                   location.reload();
+                 }
+                 else if(data.status == "name")
+                 {
+                  $('#new_user_name').css('background', 'red');
+                  $('#used_username').text('Jméno je již používané');
+                 }
+                 else {
+                     alert('Chyba');
+                 }
+             },
+             error: function (edata) {
+              alert('Chyba');
+             }
+         })
+    }
+</script>
+
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="{% url 'index' %}">Sprvce hesel</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="{% url 'profile' %}">{{ user.username }}</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'new_item' %}">Přidat položku</a>
+      </li>
+    </ul>
+    <form class="form-inline my-2 my-lg-0">
+      <input class="form-control mr-sm-2" type="search" placeholder="Hledat" aria-label="Search">
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+    </form>
+  </div>
+</nav>
+<a href="{% url 'logout' %}" class="btn btn-outline-dark" style="float: right; margin-top: 10px;margin-right: 10px;">Odhlásit se</a>
+<button class="btn btn-outline-dark" style="float: right; margin-top: 10px;margin-right: 10px;" onclick="$('#change_user').modal();">Správa profilu</button>
+
+<H1 style="padding: 20px;">Hesla</H1>
+<div class="container">
+    <div class="row">
+        <div class="col-sm-4">
+        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+            {% for i in items %}
+                <a class="nav-link" id="v-pills-{{ i.domain }}--tab" data-toggle="pill" href="#v-pills-{{ i.domain }}" role="tab" aria-controls="v-pills-{{ i.domain }}" aria-selected="false">{{ i.domain }}</a>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-sm-8">
+       <div class="tab-content" id="v-pills-tabContent">
+           {% for i in items2 %}
+       <div class="tab-pane fade" id="v-pills-{{ i.domain }}" role="tabpanel" aria-labelledby="v-pills-{{ i.domain }}">
+         Jméno: <strong id="{{ i.domain }}-u">{{ i.username }}</strong><br>
+         Heslo: <strong id="{{ i.domain }}-p">{{ i.password }}</strong>
+         <div id="del_date_div--{{i.domain}}">
+         {% if i.date_del %}<p>Vymazat dne: <span id="del_date--{{i.domain}}">{{ i.date_del }}</span></p>{% endif %}<br>
+        </div>
+         <button id="btn--{{ i.domain }}" domain="{{i.domain}}" user="{{i.username}}" password="{{i.password}}" item_id="{{i.id}}" date_del="{{i.date_del}}" onclick='change_item("{{ i.domain }}");' class="btn btn-secondary">Upravit</button><br><br><button class="btn btn-danger" onclick='delte("{{i.domain}}");'>Odebrat</button></div>
+            {% endfor %}
+       </div>
+    </div>
+    </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="change_data" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="title"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="modal">
+           <div class="form-group">
+                <label for="exampleInputweb">Název webu</label>
+                <input type="text" class="form-control" id="web" aria-describedby="emailHelp" placeholder="web">
+                  <small class="form-text text-muted" id="forweb"></small>
+              </div>
+                 <div class="form-group">
+                <label for="exampleInputusername">Uživatelské jméno</label>
+                <input type="text" class="form-control" id="username" placeholder="Uživatelské jméno">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputPassword">Heslo</label>
+                <input type="password" class="form-control" id="password" placeholder="Heslo">
+              </div>
+               <div class="form-group">
+                <label for="exampleInputuser">Uživatel</label>
+                <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                   <small class="form-text text-muted">Jste přihláseni</small>
+              </div>
+                <div class="form-group">
+                <label for="exampleInputPassword">Datum odstranění</label>
+                <input type="date" class="form-control" id="del_date" placeholder="Datum">
+              </div>
+          <input type="text" id="id" hidden>
+          <input type="text" id="idname" hidden>
+      </div>
+        <div class="modal-body" id="finished" style="visibility: hidden;">
+            <H1>Uloženo</H1>
+        </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Skrýt</button>
+        <button type="button" class="btn btn-primary" onclick="save();">Uložit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal user -->
+<div class="modal fade" id="change_user" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="user_title"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="user_modal">
+           <div class="form-group">
+                <label for="exampleInputweb">Jméno uživatele</label>
+                <input type="text" class="form-control" id="new_user_name" aria-describedby="emailHelp" placeholder="Jméno">
+                <small class="form-text text-muted" id="used_username"></small>
+              </div>
+                 <div class="form-group">
+                <label for="exampleInputusername">Email</label>
+                <input type="email" class="form-control" id="new_user_email" placeholder="Email">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputPassword">Heslo</label>
+                <input type="password" class="form-control" id="new_user_password" placeholder="Heslo">
+              </div>
+               <div class="form-group">
+                <label for="exampleInputuser">Uživatel</label>
+                <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                   <small class="form-text text-muted">Jste přihláseni</small>
+              </div>
+      </div>
+        <div class="modal-body" id="user_finished" style="visibility: hidden;">
+            <H1>Uloženo</H1>
+        </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Skrýt</button>
+        <button type="button" class="btn btn-primary" onclick="save_user();">Uložit</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

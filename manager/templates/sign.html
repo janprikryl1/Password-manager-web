@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Přihlásit se</title>
+    {% load static %}
+
+       <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+<script>
+
+
+ $(document).ready(function (event) {
+     $('#myModal').on('shown.bs.modal', function () {
+        $('#myInput').trigger('focus');
+     });
+     $('#register').on('submit', function (event) {
+         $('#main').css("visibility", "hidden");
+         $('#loader').css("visibility", "visible");
+         event.preventDefault();
+         $.ajax({
+             type:'POST',
+             url:'{% url 'sign_up' %}',
+             data:{
+                 'name':$("#name").val(),
+                 'email': $('#email').val(),
+                 'password': $('#password').val(),
+                 'csrfmiddlewaretoken':'{{ csrf_token }}'
+             },
+             success: function (data) {
+                 if (data.status == "ok")
+                 {
+                     alert("Účet vytvořen");
+                     $("#name").val("");
+                     $('#email').val("");
+                     $('#password').val("");
+                     $('#loader').css("visibility", "hidden");
+                     $('#main').css("visibility", "visible");
+                 }
+                 else if (data.status == "name")
+                 {
+                     alert("Jméno je již používané");
+                     $('#name').css("background", "red");
+                     $('#loader').css("visibility", "hidden");
+                     $('#main').css("visibility", "visible");
+                 }
+                 else {
+                     alert("error");
+                     $('#loader').css("visibility", "hidden");
+                     $('#main').css("visibility", "visible");
+                 }
+             },
+             error: function (edata) {
+                 alert("Chyba");
+                 $('#loader').css("visibility", "hidden");
+                 $('#main').css("visibility", "visible");
+             }
+         })
+     });
+
+    $("#sign_in").on('submit', function (event) {
+        $('#main').css("visibility", "hidden");
+        $('#loader').css("visibility", "visible");
+        event.preventDefault();
+                $.ajax({
+                    type:'POST',
+                    url:'{% url 'sign_in' %}',
+                    data:{
+                        'name':$("#name_in").val(),
+                        'password': $('#password_in').val(),
+                        'csrfmiddlewaretoken':'{{ csrf_token }}'
+                    },
+                    success: function (data) {
+                        if (data.status == "ok")
+                        {
+                            alert("Jste přihlášeni");
+                            window.location.href = "{% url 'profile' %}";
+                        }
+                        if (data.status == "error")
+                        {
+                            alert("Špatné jméno, nebo heslo");
+                            //$('#password_in').val("");
+                            $('#loader').css("visibility", "hidden");
+                            $('#main').css("visibility", "visible");
+                        }
+                    },
+                    error: function (edata) {
+                        alert("Chyba");
+                    }
+                })
+    });
+ });
+</script>
+
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="{% url 'index' %}">Sprvce hesel</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="{% url 'profile' %}">Profil</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'new_item' %}">Přidat položku</a>
+      </li>
+    </ul>
+    <form class="form-inline my-2 my-lg-0">
+      <input class="form-control mr-sm-2" type="search" placeholder="Hledat" aria-label="Search">
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+    </form>
+  </div>
+</nav>
+
+<div class="container" style="position: center; margin-top:30px;" id="main">
+      <div class="row">
+          <div class="col-sm-4">
+              <h1>Přihlašte se</h1>
+                 <form id="sign_in">
+                  {% csrf_token %}
+                     <input type="text" class="form-control" placeholder="E-mail, jméno" id="name_in" required>
+
+                     <input type="password" class="form-control" placeholder="Heslo" id="password_in" required>
+                     <br>
+                     <input type="submit" value="Přihlásit" class="btn btn-success">
+                 </form>
+          </div>
+
+
+          <div class="col-sm">
+              <h1>Zaregistrujte se</h1>
+              <form id="register">
+                  {% csrf_token %}
+                  <input type="text" class="form-control" placeholder="Jméno" id="name" required>
+                  <input type="email" class="form-control" placeholder="Email" id="email" required>
+                  <input type="password" class="form-control" placeholder="Heslo" id="password" required>
+
+                  <!-- Button trigger modal -->
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong">
+                  Zobrazit podmínky použivání
+                </button>
+
+                  <input type="submit" value="Registrovat" class="btn btn-primary">
+              </form>
+          </div>
+      </div>
+ </div>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Podmínky</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+            <H1>Beru na vědomí, že má data nemusí být na 100% v bezpečí</H1>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Zavřít</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container" id="loader" style="position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+  visibility: hidden;">
+</div>
+
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Nová položka</title>
+        {% load static %}
+
+       <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="{% url 'index' %}">Sprvce hesel</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'profile' %}">{{ user.username }}</a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" href="{% url 'new_item' %}">Přidat položku</a>
+      </li>
+    </ul>
+    <form class="form-inline my-2 my-lg-0">
+      <input class="form-control mr-sm-2" type="search" placeholder="Hledat" aria-label="Search">
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+    </form>
+  </div>
+</nav>
+
+
+<script>
+$(document).ready(function (event) {;
+     $('#add').on('submit', function (event) {
+         event.preventDefault();
+         $.ajax({
+             type:'POST',
+             url:'{% url 'add_new_item' %}',
+             data:{
+                 'web':$("#web").val(),
+                 'username': $('#username').val(),
+                 'password': $('#password').val(),
+                 'del_date': $('#del_date').val(),
+                 'csrfmiddlewaretoken':'{{ csrf_token }}'
+             },
+             success: function (data) {
+                 if (data.status == "ok")
+                 {
+                     $('#status').text("Uloženo");
+                     $('#text').text("Profil:{{ user.username }}");
+                     $("#exampleModal").modal();
+                     $("#web").val("");
+                     $('#username').val("");
+                     $('#password').val("");
+                     $('#del_date').val("");
+                 }
+                 else if (data.status == "web")
+                 {
+                     $('#status').text("Pozor");
+                     $('#text').text("Název je již použit");
+                     $("#exampleModal").modal();
+                     document.getElementById('forweb').innerText = "Název je již použit"
+                     $('#web').css("background", "red");
+                 }
+                 else {
+                     $('#status').text("Chyba");
+                     $('#text').text("");
+                     $("#exampleModal").modal();
+                 }
+             },
+             error: function (edata) {
+                 $('#status').text("Chyba");
+                 $('#text').text("");
+                 $("#exampleModal").modal();
+             }
+         })
+     });
+      $( window ).on('beforeunload',function() {
+         if ($('#web').val() != "" || $('#username').val() != "" || $('#password').val() != "" || $('#del_date').val() != ""){
+             return "Bye";
+        }
+     });
+    /* $(window).on("unload", function(e) {
+     if ($('#username').val() == "" || $('#password').val() == "" || $('#del_date').val() == ""){
+                $("#exampleModal").modal();
+        }
+        });
+      /* $( window ).unload(function() {
+        if ($('#username').val() == "" || $('#password').val() == "" || $('#del_date').val() == ""){
+                $("#exampleModal").modal();
+        }
+    });*/
+     });
+</script>
+
+<div class="container" style="margin-left: 30px; margin-top: 30px;">
+    <div class="row">
+        <div class="col-sm-3">
+            <H1>Nová položka</H1>
+        </div>
+        <div class="col-sm-8">
+            <form id="add">
+              <div class="form-group">
+                <label for="exampleInputweb">Název webu</label>
+                <input type="text" class="form-control" id="web" aria-describedby="emailHelp" placeholder="web">
+                  <small class="form-text text-muted" id="forweb"></small>
+              </div>
+                 <div class="form-group">
+                <label for="exampleInputusername">Uživatelské jméno</label>
+                <input type="text" class="form-control" id="username" placeholder="Uživatelské jméno">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputPassword">Heslo</label>
+                <input type="password" class="form-control" id="password" placeholder="Heslo">
+              </div>
+               <div class="form-group">
+                <label for="exampleInputuser">Uživatel</label>
+                <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                   <small class="form-text text-muted">Jste přihláseni</small>
+              </div>
+                <div class="form-group">
+                <label for="exampleInputPassword">Datum odstranění</label>
+                <input type="date" class="form-control" id="del_date" placeholder="Datum">
+              </div>
+              <button type="submit" class="btn btn-primary">Přidat</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="status"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <H1 id="text"></H1>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Zpět</button>
+        <!--<button type="button" class="btn btn-primary">Odejít</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
